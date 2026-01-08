@@ -39,39 +39,5 @@ export const tagsAPI = {
   create: (data) => api.post('/tags', data),
 };
 
-// Helper function to handle tags
-export const processTags = async (tagsString) => {
-  if (!tagsString || !tagsString.trim()) {
-    return [];
-  }
-
-  const tagNames = tagsString
-    .split(',')
-    .map(tag => tag.trim())
-    .filter(tag => tag.length > 0);
-
-  const tagIds = [];
-
-  for (const tagName of tagNames) {
-    try {
-      // Try to find existing tag
-      const allTags = await tagsAPI.getAll();
-      const existingTag = allTags.data.data.find(tag => tag.name.toLowerCase() === tagName.toLowerCase());
-
-      if (existingTag) {
-        tagIds.push(existingTag.id);
-      } else {
-        // Create new tag
-        const newTag = await tagsAPI.create({ name: tagName });
-        tagIds.push(newTag.data.data.id);
-      }
-    } catch (error) {
-      console.error(`Error processing tag "${tagName}":`, error);
-    }
-  }
-
-  return tagIds;
-};
-
 export default api;
 

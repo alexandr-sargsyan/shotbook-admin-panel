@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { videoReferencesAPI, categoriesAPI, processTags } from '../../services/api';
+import { videoReferencesAPI, categoriesAPI } from '../../services/api';
 import './VideoReferenceForm.css';
 
 const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
@@ -10,9 +10,7 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
     title: '',
     source_url: '',
     preview_url: '',
-    preview_embed: '',
     public_summary: '',
-    details_public: '',
     duration_sec: '',
     category_id: '',
     platform: '',
@@ -53,19 +51,12 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
       
       // Format tags as comma-separated string
       const tagsString = data.tags?.map(tag => tag.name).join(', ') || '';
-      
-      // Format details_public as JSON string
-      const detailsPublicString = data.details_public 
-        ? JSON.stringify(data.details_public, null, 2) 
-        : '';
 
       setFormData({
         title: data.title || '',
         source_url: data.source_url || '',
         preview_url: data.preview_url || '',
-        preview_embed: data.preview_embed || '',
         public_summary: data.public_summary || '',
-        details_public: detailsPublicString,
         duration_sec: data.duration_sec || '',
         category_id: data.category_id || '',
         platform: data.platform || '',
@@ -126,53 +117,90 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
     setLoading(true);
 
     try {
-      // Process tags
-      const tagIds = await processTags(formData.tags);
+      // Подготавливаем теги: разбиваем строку на массив имен
+      const tagNames = formData.tags
+        ? formData.tags
+            .split(',')
+            .map(tag => tag.trim())
+            .filter(tag => tag.length > 0)
+        : [];
 
-      // Parse details_public if provided
-      let detailsPublic = null;
-      if (formData.details_public.trim()) {
-        try {
-          detailsPublic = JSON.parse(formData.details_public);
-        } catch (error) {
-          toast.error('Invalid JSON in Details Public field');
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Prepare tutorials data
+      // Prepare tutorials data - фильтруем и убираем null значения
       const tutorials = formData.tutorials
         .filter(t => t.tutorial_url || (t.label && t.start_sec && t.end_sec))
-        .map(t => ({
-          tutorial_url: t.tutorial_url || null,
-          label: t.label || null,
-          start_sec: t.start_sec ? parseInt(t.start_sec) : null,
-          end_sec: t.end_sec ? parseInt(t.end_sec) : null,
-        }));
+        .map(t => {
+          const tutorial = {};
+          if (t.tutorial_url && t.tutorial_url.trim()) {
+            tutorial.tutorial_url = t.tutorial_url.trim();
+          }
+          if (t.label && t.label.trim()) {
+            tutorial.label = t.label.trim();
+          }
+          if (t.start_sec && t.start_sec.toString().trim()) {
+            const startSec = parseInt(t.start_sec);
+            if (!isNaN(startSec) && startSec >= 0) {
+              tutorial.start_sec = startSec;
+            }
+          }
+          if (t.end_sec && t.end_sec.toString().trim()) {
+            const endSec = parseInt(t.end_sec);
+            if (!isNaN(endSec) && endSec >= 0) {
+              tutorial.end_sec = endSec;
+            }
+          }
+          return tutorial;
+        })
+        .filter(t => Object.keys(t).length > 0); // Убираем пустые объекты
 
+      // Формируем объект данных, исключая null и пустые значения
       const data = {
         title: formData.title,
         source_url: formData.source_url,
-        preview_url: formData.preview_url || null,
-        preview_embed: formData.preview_embed || null,
-        public_summary: formData.public_summary || null,
-        details_public: detailsPublic,
-        duration_sec: formData.duration_sec ? parseInt(formData.duration_sec) : null,
         category_id: parseInt(formData.category_id),
-        pacing: formData.pacing || null,
-        hook_type: formData.hook_type || null,
-        production_level: formData.production_level || null,
         has_visual_effects: formData.has_visual_effects,
         has_3d: formData.has_3d,
         has_animations: formData.has_animations,
         has_typography: formData.has_typography,
         has_sound_design: formData.has_sound_design,
         search_profile: formData.search_profile,
-        search_metadata: formData.search_metadata || null,
-        tags: tagIds,
-        tutorials: tutorials.length > 0 ? tutorials : null,
+        tags: tagNames, // Теги всегда отправляем (валидация требует минимум 1 при создании)
       };
+
+      // Добавляем опциональные поля только если они не пустые
+      if (formData.preview_url && formData.preview_url.trim()) {
+        data.preview_url = formData.preview_url.trim();
+      }
+
+      if (formData.public_summary && formData.public_summary.trim()) {
+        data.public_summary = formData.public_summary.trim();
+      }
+
+      if (formData.duration_sec && formData.duration_sec.trim()) {
+        const duration = parseInt(formData.duration_sec);
+        if (!isNaN(duration) && duration > 0) {
+          data.duration_sec = duration;
+        }
+      }
+
+      if (formData.pacing && formData.pacing.trim()) {
+        data.pacing = formData.pacing.trim();
+      }
+
+      if (formData.hook_type && formData.hook_type.trim()) {
+        data.hook_type = formData.hook_type.trim();
+      }
+
+      if (formData.production_level && formData.production_level.trim()) {
+        data.production_level = formData.production_level.trim();
+      }
+
+      if (formData.search_metadata && formData.search_metadata.trim()) {
+        data.search_metadata = formData.search_metadata.trim();
+      }
+
+      if (tutorials.length > 0) {
+        data.tutorials = tutorials;
+      }
 
       if (video) {
         await videoReferencesAPI.update(video.id, data);
@@ -236,33 +264,12 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
             </div>
 
             <div className="form-group">
-              <label>Preview Embed</label>
-              <textarea
-                name="preview_embed"
-                value={formData.preview_embed}
-                onChange={handleChange}
-                rows="3"
-              />
-            </div>
-
-            <div className="form-group">
               <label>Public Summary</label>
               <textarea
                 name="public_summary"
                 value={formData.public_summary}
                 onChange={handleChange}
                 rows="3"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Details Public (JSON)</label>
-              <textarea
-                name="details_public"
-                value={formData.details_public}
-                onChange={handleChange}
-                rows="4"
-                placeholder='{"key": "value"}'
               />
             </div>
 
