@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import { videoReferencesAPI } from '../../services/api';
 import VideoReferenceForm from './VideoReferenceForm';
+import ConfirmModal from '../ConfirmModal';
 import './VideoReferenceList.css';
 
 const VideoReferenceList = () => {
@@ -10,6 +12,7 @@ const VideoReferenceList = () => {
   const [editingVideo, setEditingVideo] = useState(null);
   const [searchId, setSearchId] = useState('');
   const [searchSourceUrl, setSearchSourceUrl] = useState('');
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, videoId: null, videoTitle: '' });
 
   useEffect(() => {
     loadVideoReferences();
@@ -22,7 +25,7 @@ const VideoReferenceList = () => {
       setVideoReferences(response.data.data);
     } catch (error) {
       console.error('Error loading video references:', error);
-      alert('Error loading video references');
+      toast.error('Error loading video references');
     } finally {
       setLoading(false);
     }
@@ -40,7 +43,7 @@ const VideoReferenceList = () => {
       setVideoReferences(response.data.data);
     } catch (error) {
       console.error('Error searching video references:', error);
-      alert('Error searching video references');
+      toast.error('Error searching video references');
     } finally {
       setLoading(false);
     }
@@ -56,19 +59,31 @@ const VideoReferenceList = () => {
     setShowForm(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this video reference?')) {
-      return;
-    }
+  const handleDeleteClick = (id, title) => {
+    setConfirmModal({
+      isOpen: true,
+      videoId: id,
+      videoTitle: title,
+    });
+  };
 
+  const handleDeleteConfirm = async () => {
+    const { videoId } = confirmModal;
+    
     try {
-      await videoReferencesAPI.delete(id);
-      alert('Video reference deleted successfully');
+      await videoReferencesAPI.delete(videoId);
+      toast.success('Video reference deleted successfully');
+      setConfirmModal({ isOpen: false, videoId: null, videoTitle: '' });
       loadVideoReferences();
     } catch (error) {
       console.error('Error deleting video reference:', error);
-      alert('Error deleting video reference');
+      toast.error('Error deleting video reference');
+      setConfirmModal({ isOpen: false, videoId: null, videoTitle: '' });
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setConfirmModal({ isOpen: false, videoId: null, videoTitle: '' });
   };
 
   const handleFormClose = () => {
@@ -157,7 +172,7 @@ const VideoReferenceList = () => {
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDelete(video.id)}
+                    onClick={() => handleDeleteClick(video.id, video.title)}
                     className="btn btn-delete"
                   >
                     Delete
@@ -176,6 +191,14 @@ const VideoReferenceList = () => {
           onSuccess={handleFormSuccess}
         />
       )}
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Video Reference"
+        message={`Are you sure you want to delete video reference "${confirmModal.videoTitle}"?`}
+      />
     </div>
   );
 };

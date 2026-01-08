@@ -109,3 +109,8 @@ body {
 .btn-search:hover {
   background-color: #229954;
 }
+
+/* Toast notifications */
+.Toastify__toast-container {
+  z-index: 9999;
+}

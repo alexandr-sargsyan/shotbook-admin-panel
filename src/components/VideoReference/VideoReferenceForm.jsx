@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import { videoReferencesAPI, categoriesAPI, processTags } from '../../services/api';
 import './VideoReferenceForm.css';
 
@@ -83,7 +84,7 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
       });
     } catch (error) {
       console.error('Error loading video data:', error);
-      alert('Error loading video data');
+      toast.error('Error loading video data');
     }
   };
 
@@ -134,7 +135,7 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
         try {
           detailsPublic = JSON.parse(formData.details_public);
         } catch (error) {
-          alert('Invalid JSON in Details Public field');
+          toast.error('Invalid JSON in Details Public field');
           setLoading(false);
           return;
         }
@@ -175,16 +176,16 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
 
       if (video) {
         await videoReferencesAPI.update(video.id, data);
-        alert('Video reference updated successfully');
+        toast.success('Video reference updated successfully');
       } else {
         await videoReferencesAPI.create(data);
-        alert('Video reference created successfully');
+        toast.success('Video reference created successfully');
       }
 
       onSuccess();
     } catch (error) {
       console.error('Error saving video reference:', error);
-      alert(error.response?.data?.message || 'Error saving video reference');
+      toast.error(error.response?.data?.message || 'Error saving video reference');
     } finally {
       setLoading(false);
     }

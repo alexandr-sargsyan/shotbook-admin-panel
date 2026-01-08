@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import { categoriesAPI } from '../../services/api';
 import './CategoryForm.css';
 
@@ -42,16 +43,16 @@ const CategoryForm = ({ category, categories, onClose, onSuccess }) => {
 
       if (category) {
         await categoriesAPI.update(category.id, data);
-        alert('Category updated successfully');
+        toast.success('Category updated successfully');
       } else {
         await categoriesAPI.create(data);
-        alert('Category created successfully');
+        toast.success('Category created successfully');
       }
 
       onSuccess();
     } catch (error) {
       console.error('Error saving category:', error);
-      alert(error.response?.data?.message || 'Error saving category');
+      toast.error(error.response?.data?.message || 'Error saving category');
     } finally {
       setLoading(false);
     }

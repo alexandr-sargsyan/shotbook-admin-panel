@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import { categoriesAPI } from '../../services/api';
 import CategoryForm from './CategoryForm';
+import ConfirmModal from '../ConfirmModal';
 import './CategoryList.css';
 
 const CategoryList = () => {
@@ -9,6 +11,7 @@ const CategoryList = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [expandedCategories, setExpandedCategories] = useState(new Set());
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, categoryId: null, categoryName: '' });
 
   useEffect(() => {
     loadCategories();
@@ -21,7 +24,7 @@ const CategoryList = () => {
       setCategories(response.data.data);
     } catch (error) {
       console.error('Error loading categories:', error);
-      alert('Error loading categories');
+      toast.error('Error loading categories');
     } finally {
       setLoading(false);
     }
@@ -37,23 +40,35 @@ const CategoryList = () => {
     setShowForm(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this category?')) {
-      return;
-    }
+  const handleDeleteClick = (id, name) => {
+    setConfirmModal({
+      isOpen: true,
+      categoryId: id,
+      categoryName: name,
+    });
+  };
 
+  const handleDeleteConfirm = async () => {
+    const { categoryId } = confirmModal;
+    
     try {
-      await categoriesAPI.delete(id);
-      alert('Category deleted successfully');
+      await categoriesAPI.delete(categoryId);
+      toast.success('Category deleted successfully');
+      setConfirmModal({ isOpen: false, categoryId: null, categoryName: '' });
       loadCategories();
     } catch (error) {
       console.error('Error deleting category:', error);
       if (error.response?.status === 422) {
-        alert(error.response.data.message || 'Cannot delete category with children or video references');
+        toast.error(error.response.data.message || 'Cannot delete category with children or video references');
       } else {
-        alert('Error deleting category');
+        toast.error('Error deleting category');
       }
+      setConfirmModal({ isOpen: false, categoryId: null, categoryName: '' });
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setConfirmModal({ isOpen: false, categoryId: null, categoryName: '' });
   };
 
   const handleFormClose = () => {
@@ -127,7 +142,7 @@ const CategoryList = () => {
               Edit
             </button>
             <button
-              onClick={() => handleDelete(category.id)}
+              onClick={() => handleDeleteClick(category.id, category.name)}
               className="btn btn-delete"
             >
               Delete
@@ -200,6 +215,14 @@ const CategoryList = () => {
           onSuccess={handleFormSuccess}
         />
       )}
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Category"
+        message={`Are you sure you want to delete category "${confirmModal.categoryName}"?`}
+      />
     </div>
   );
 };

@@ -1,0 +1,35 @@
+.confirm-modal {
+  max-width: 400px;
+  width: 90%;
+}
+
+.confirm-modal-header {
+  padding: 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+.confirm-modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #2c3e50;
+}
+
+.confirm-modal-body {
+  padding: 20px;
+}
+
+.confirm-modal-body p {
+  margin: 0;
+  color: #555;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 20px;
+  border-top: 1px solid #ddd;
+}
+
