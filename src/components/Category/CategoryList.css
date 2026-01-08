@@ -37,6 +37,48 @@
   background-color: #f5f5f5;
 }
 
+.data-table tbody tr.child-category {
+  background-color: #fafafa;
+}
+
+.data-table tbody tr.child-category:hover {
+  background-color: #f0f0f0;
+}
+
+.expand-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: #3498db;
+  padding: 0 5px;
+  margin-right: 5px;
+  vertical-align: middle;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.expand-btn:hover {
+  color: #2980b9;
+  background-color: #ecf0f1;
+  border-radius: 3px;
+}
+
+.no-children-indicator {
+  display: inline-block;
+  width: 20px;
+  color: #bdc3c7;
+  text-align: center;
+  margin-right: 5px;
+}
+
+.category-name {
+  vertical-align: middle;
+}
+
 .empty-state {
   text-align: center;
   padding: 40px;

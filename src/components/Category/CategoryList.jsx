@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { categoriesAPI } from '../../services/api';
 import CategoryForm from './CategoryForm';
 import './CategoryList.css';
@@ -8,6 +8,7 @@ const CategoryList = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
+  const [expandedCategories, setExpandedCategories] = useState(new Set());
 
   useEffect(() => {
     loadCategories();
@@ -65,15 +66,98 @@ const CategoryList = () => {
     loadCategories();
   };
 
-  const getCategoryName = (parentId) => {
+  const toggleExpand = (categoryId) => {
+    setExpandedCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(categoryId)) {
+        newSet.delete(categoryId);
+      } else {
+        newSet.add(categoryId);
+      }
+      return newSet;
+    });
+  };
+
+  const getCategoryName = (parentId, allCategories) => {
     if (!parentId) return '-';
-    const parent = categories.find(cat => cat.id === parentId);
+    const findCategory = (cats, id) => {
+      for (const cat of cats) {
+        if (cat.id === id) return cat;
+        if (cat.children) {
+          const found = findCategory(cat.children, id);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    const parent = findCategory(allCategories, parentId);
     return parent ? parent.name : '-';
+  };
+
+  const renderCategoryRow = (category, level = 0, allCategories) => {
+    const hasChildren = category.children && category.children.length > 0;
+    const isExpanded = expandedCategories.has(category.id);
+    const indent = level * 30;
+
+    return (
+      <React.Fragment key={category.id}>
+        <tr className={level > 0 ? 'child-category' : ''}>
+          <td>{category.id}</td>
+          <td style={{ paddingLeft: `${indent + 10}px` }}>
+            {hasChildren && (
+              <button
+                className="expand-btn"
+                onClick={() => toggleExpand(category.id)}
+                title={isExpanded ? 'Collapse' : 'Expand'}
+              >
+                {isExpanded ? '▼' : '▶'}
+              </button>
+            )}
+            {!hasChildren && <span className="no-children-indicator">•</span>}
+            <span className="category-name">{category.name}</span>
+          </td>
+          <td>{category.slug}</td>
+          <td>{getCategoryName(category.parent_id, allCategories)}</td>
+          <td>{category.order || 0}</td>
+          <td>
+            <button
+              onClick={() => handleEdit(category)}
+              className="btn btn-edit"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => handleDelete(category.id)}
+              className="btn btn-delete"
+            >
+              Delete
+            </button>
+          </td>
+        </tr>
+        {hasChildren && isExpanded && category.children.map(child => 
+          renderCategoryRow(child, level + 1, allCategories)
+        )}
+      </React.Fragment>
+    );
   };
 
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
+
+  // Flatten categories for form (to get all categories including children)
+  const getAllCategoriesFlat = (cats) => {
+    let result = [];
+    cats.forEach(cat => {
+      result.push(cat);
+      if (cat.children) {
+        result = result.concat(getAllCategoriesFlat(cat.children));
+      }
+    });
+    return result;
+  };
+
+  const allCategoriesFlat = getAllCategoriesFlat(categories);
 
   return (
     <div className="category-list">
@@ -103,29 +187,7 @@ const CategoryList = () => {
               </td>
             </tr>
           ) : (
-            categories.map((category) => (
-              <tr key={category.id}>
-                <td>{category.id}</td>
-                <td>{category.name}</td>
-                <td>{category.slug}</td>
-                <td>{getCategoryName(category.parent_id)}</td>
-                <td>{category.order || 0}</td>
-                <td>
-                  <button
-                    onClick={() => handleEdit(category)}
-                    className="btn btn-edit"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(category.id)}
-                    className="btn btn-delete"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))
+            categories.map((category) => renderCategoryRow(category, 0, categories))
           )}
         </tbody>
       </table>
@@ -133,7 +195,7 @@ const CategoryList = () => {
       {showForm && (
         <CategoryForm
           category={editingCategory}
-          categories={categories}
+          categories={allCategoriesFlat}
           onClose={handleFormClose}
           onSuccess={handleFormSuccess}
         />
