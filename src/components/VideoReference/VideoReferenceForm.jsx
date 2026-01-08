@@ -1,0 +1,513 @@
+import { useState, useEffect } from 'react';
+import { videoReferencesAPI, categoriesAPI, processTags } from '../../services/api';
+import './VideoReferenceForm.css';
+
+const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    source_url: '',
+    preview_url: '',
+    preview_embed: '',
+    public_summary: '',
+    details_public: '',
+    duration_sec: '',
+    category_id: '',
+    platform: '',
+    pacing: '',
+    hook_type: '',
+    production_level: '',
+    has_visual_effects: false,
+    has_3d: false,
+    has_animations: false,
+    has_typography: false,
+    has_sound_design: false,
+    search_profile: '',
+    search_metadata: '',
+    tags: '',
+    tutorials: [],
+  });
+
+  useEffect(() => {
+    loadCategories();
+    if (video) {
+      loadVideoData();
+    }
+  }, [video]);
+
+  const loadCategories = async () => {
+    try {
+      const response = await categoriesAPI.getAll();
+      setCategories(response.data.data);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  };
+
+  const loadVideoData = async () => {
+    try {
+      const response = await videoReferencesAPI.getById(video.id);
+      const data = response.data.data;
+      
+      // Format tags as comma-separated string
+      const tagsString = data.tags?.map(tag => tag.name).join(', ') || '';
+      
+      // Format details_public as JSON string
+      const detailsPublicString = data.details_public 
+        ? JSON.stringify(data.details_public, null, 2) 
+        : '';
+
+      setFormData({
+        title: data.title || '',
+        source_url: data.source_url || '',
+        preview_url: data.preview_url || '',
+        preview_embed: data.preview_embed || '',
+        public_summary: data.public_summary || '',
+        details_public: detailsPublicString,
+        duration_sec: data.duration_sec || '',
+        category_id: data.category_id || '',
+        platform: data.platform || '',
+        pacing: data.pacing || '',
+        hook_type: data.hook_type || '',
+        production_level: data.production_level || '',
+        has_visual_effects: data.has_visual_effects || false,
+        has_3d: data.has_3d || false,
+        has_animations: data.has_animations || false,
+        has_typography: data.has_typography || false,
+        has_sound_design: data.has_sound_design || false,
+        search_profile: data.search_profile || '',
+        search_metadata: data.search_metadata || '',
+        tags: tagsString,
+        tutorials: data.tutorials || [],
+      });
+    } catch (error) {
+      console.error('Error loading video data:', error);
+      alert('Error loading video data');
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
+
+  const handleTutorialChange = (index, field, value) => {
+    setFormData(prev => {
+      const tutorials = [...prev.tutorials];
+      tutorials[index] = {
+        ...tutorials[index],
+        [field]: value,
+      };
+      return { ...prev, tutorials };
+    });
+  };
+
+  const addTutorial = () => {
+    setFormData(prev => ({
+      ...prev,
+      tutorials: [...prev.tutorials, { tutorial_url: '', label: '', start_sec: '', end_sec: '' }],
+    }));
+  };
+
+  const removeTutorial = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      tutorials: prev.tutorials.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      // Process tags
+      const tagIds = await processTags(formData.tags);
+
+      // Parse details_public if provided
+      let detailsPublic = null;
+      if (formData.details_public.trim()) {
+        try {
+          detailsPublic = JSON.parse(formData.details_public);
+        } catch (error) {
+          alert('Invalid JSON in Details Public field');
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Prepare tutorials data
+      const tutorials = formData.tutorials
+        .filter(t => t.tutorial_url || (t.label && t.start_sec && t.end_sec))
+        .map(t => ({
+          tutorial_url: t.tutorial_url || null,
+          label: t.label || null,
+          start_sec: t.start_sec ? parseInt(t.start_sec) : null,
+          end_sec: t.end_sec ? parseInt(t.end_sec) : null,
+        }));
+
+      const data = {
+        title: formData.title,
+        source_url: formData.source_url,
+        preview_url: formData.preview_url || null,
+        preview_embed: formData.preview_embed || null,
+        public_summary: formData.public_summary || null,
+        details_public: detailsPublic,
+        duration_sec: formData.duration_sec ? parseInt(formData.duration_sec) : null,
+        category_id: parseInt(formData.category_id),
+        pacing: formData.pacing || null,
+        hook_type: formData.hook_type || null,
+        production_level: formData.production_level || null,
+        has_visual_effects: formData.has_visual_effects,
+        has_3d: formData.has_3d,
+        has_animations: formData.has_animations,
+        has_typography: formData.has_typography,
+        has_sound_design: formData.has_sound_design,
+        search_profile: formData.search_profile,
+        search_metadata: formData.search_metadata || null,
+        tags: tagIds,
+        tutorials: tutorials.length > 0 ? tutorials : null,
+      };
+
+      if (video) {
+        await videoReferencesAPI.update(video.id, data);
+        alert('Video reference updated successfully');
+      } else {
+        await videoReferencesAPI.create(data);
+        alert('Video reference created successfully');
+      }
+
+      onSuccess();
+    } catch (error) {
+      console.error('Error saving video reference:', error);
+      alert(error.response?.data?.message || 'Error saving video reference');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content large" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>{video ? 'Edit Video Reference' : 'Add Video Reference'}</h2>
+          <button className="close-btn" onClick={onClose}>×</button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="video-reference-form">
+          <div className="form-section">
+            <h3>Display Fields</h3>
+            
+            <div className="form-group">
+              <label>Title *</label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Source URL *</label>
+              <input
+                type="url"
+                name="source_url"
+                value={formData.source_url}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Preview URL</label>
+              <input
+                type="url"
+                name="preview_url"
+                value={formData.preview_url}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Preview Embed</label>
+              <textarea
+                name="preview_embed"
+                value={formData.preview_embed}
+                onChange={handleChange}
+                rows="3"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Public Summary</label>
+              <textarea
+                name="public_summary"
+                value={formData.public_summary}
+                onChange={handleChange}
+                rows="3"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Details Public (JSON)</label>
+              <textarea
+                name="details_public"
+                value={formData.details_public}
+                onChange={handleChange}
+                rows="4"
+                placeholder='{"key": "value"}'
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Duration (seconds)</label>
+              <input
+                type="number"
+                name="duration_sec"
+                value={formData.duration_sec}
+                onChange={handleChange}
+                min="1"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Tags (comma-separated)</label>
+              <input
+                type="text"
+                name="tags"
+                value={formData.tags}
+                onChange={handleChange}
+                placeholder="cinematic, vfx, typography"
+              />
+            </div>
+          </div>
+
+          <div className="form-section">
+            <h3>Filter Fields</h3>
+
+            <div className="form-group">
+              <label>Category *</label>
+              <select
+                name="category_id"
+                value={formData.category_id}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select Category</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Platform (auto-detected)</label>
+              <input
+                type="text"
+                name="platform"
+                value={formData.platform}
+                readOnly
+                className="readonly"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Pacing</label>
+              <select
+                name="pacing"
+                value={formData.pacing}
+                onChange={handleChange}
+              >
+                <option value="">Select Pacing</option>
+                <option value="slow">Slow</option>
+                <option value="fast">Fast</option>
+                <option value="mixed">Mixed</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Hook Type</label>
+              <input
+                type="text"
+                name="hook_type"
+                value={formData.hook_type}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Production Level</label>
+              <select
+                name="production_level"
+                value={formData.production_level}
+                onChange={handleChange}
+              >
+                <option value="">Select Level</option>
+                <option value="low">Low</option>
+                <option value="mid">Mid</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+
+            <div className="form-group checkboxes">
+              <label>Flags:</label>
+              <div className="checkbox-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    name="has_visual_effects"
+                    checked={formData.has_visual_effects}
+                    onChange={handleChange}
+                  />
+                  Has Visual Effects
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    name="has_3d"
+                    checked={formData.has_3d}
+                    onChange={handleChange}
+                  />
+                  Has 3D
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    name="has_animations"
+                    checked={formData.has_animations}
+                    onChange={handleChange}
+                  />
+                  Has Animations
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    name="has_typography"
+                    checked={formData.has_typography}
+                    onChange={handleChange}
+                  />
+                  Has Typography
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    name="has_sound_design"
+                    checked={formData.has_sound_design}
+                    onChange={handleChange}
+                  />
+                  Has Sound Design
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div className="form-section">
+            <h3>Search Fields</h3>
+
+            <div className="form-group">
+              <label>Search Profile *</label>
+              <textarea
+                name="search_profile"
+                value={formData.search_profile}
+                onChange={handleChange}
+                rows="4"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Search Metadata</label>
+              <textarea
+                name="search_metadata"
+                value={formData.search_metadata}
+                onChange={handleChange}
+                rows="3"
+              />
+            </div>
+          </div>
+
+          <div className="form-section">
+            <h3>Tutorials (Optional)</h3>
+            {formData.tutorials.map((tutorial, index) => (
+              <div key={index} className="tutorial-item">
+                <div className="tutorial-header">
+                  <h4>Tutorial {index + 1}</h4>
+                  <button
+                    type="button"
+                    onClick={() => removeTutorial(index)}
+                    className="btn btn-delete-small"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div className="form-group">
+                  <label>Tutorial URL</label>
+                  <input
+                    type="url"
+                    value={tutorial.tutorial_url || ''}
+                    onChange={(e) => handleTutorialChange(index, 'tutorial_url', e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Label</label>
+                  <input
+                    type="text"
+                    value={tutorial.label || ''}
+                    onChange={(e) => handleTutorialChange(index, 'label', e.target.value)}
+                  />
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Start (sec)</label>
+                    <input
+                      type="number"
+                      value={tutorial.start_sec || ''}
+                      onChange={(e) => handleTutorialChange(index, 'start_sec', e.target.value)}
+                      min="0"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>End (sec)</label>
+                    <input
+                      type="number"
+                      value={tutorial.end_sec || ''}
+                      onChange={(e) => handleTutorialChange(index, 'end_sec', e.target.value)}
+                      min="0"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addTutorial}
+              className="btn btn-secondary"
+            >
+              Add Tutorial
+            </button>
+          </div>
+
+          <div className="form-actions">
+            <button type="button" onClick={onClose} className="btn btn-cancel">
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? 'Saving...' : video ? 'Update' : 'Create'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default VideoReferenceForm;
+

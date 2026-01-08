@@ -1,70 +1,171 @@
-# Getting Started with Create React App
+# Filmmaker Reference Platform - Admin Panel
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Админ-панель для управления видео-референсами и категориями. Создана на React.
 
-## Available Scripts
+## 📋 Требования
 
-In the project directory, you can run:
+- Node.js 16+ и npm
+- Запущенный backend сервер (Laravel API)
+
+## 🚀 Установка и запуск
+
+### 1. Клонирование репозитория
+
+```bash
+git clone <repository-url>
+cd project_x-admin-panel
+```
+
+### 2. Установка зависимостей
+
+```bash
+npm install
+```
+
+### 3. Настройка API URL
+
+Создайте файл `.env` в корне проекта (если его нет):
+
+```bash
+touch .env
+```
+
+Добавьте URL вашего backend API:
+
+```env
+REACT_APP_API_URL=http://localhost:8000/api
+```
+
+Если backend запущен на другом порту или хосте, измените URL соответственно.
+
+### 4. Запуск сервера разработки
+
+```bash
+npm start
+```
+
+Приложение откроется автоматически в браузере по адресу: `http://localhost:3000`
+
+## 🎯 Функционал
+
+### Categories (Категории)
+
+- Просмотр списка всех категорий
+- Создание новых категорий
+- Редактирование категорий
+- Удаление категорий (с проверкой на дочерние элементы)
+- Создание подкатегорий (через поле Parent Category)
+
+### Video References (Видео-референсы)
+
+- Просмотр списка всех видео-референсов
+- Поиск по ID
+- Поиск по Source URL
+- Создание новых видео-референсов
+- Редактирование видео-референсов
+- Удаление видео-референсов
+- Автоматическое создание тегов (если тег не существует, он создаётся автоматически)
+
+## 📁 Структура проекта
+
+```
+src/
+├── components/
+│   ├── Sidebar.jsx              # Боковое меню
+│   ├── Category/
+│   │   ├── CategoryList.jsx     # Список категорий
+│   │   ├── CategoryForm.jsx     # Форма категорий
+│   │   └── *.css                # Стили
+│   └── VideoReference/
+│       ├── VideoReferenceList.jsx  # Список видео
+│       ├── VideoReferenceForm.jsx  # Форма видео
+│       └── *.css                   # Стили
+├── pages/
+│   ├── Categories.jsx           # Страница категорий
+│   └── VideoReferences.jsx      # Страница видео
+├── services/
+│   └── api.js                   # API клиент
+├── App.js                       # Главный компонент с роутингом
+└── index.js                     # Точка входа
+```
+
+## 🔧 Доступные команды
 
 ### `npm start`
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Запускает приложение в режиме разработки. Откроется на `http://localhost:3000`
 
 ### `npm run build`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Создаёт production сборку приложения в папке `build/`
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### `npm test`
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Запускает тесты
 
 ### `npm run eject`
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+**⚠️ Внимание:** Это необратимая операция! Удаляет возможность использовать `react-scripts`
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 🌐 API Integration
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Админ-панель использует следующие API endpoints:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- `GET /api/categories` - Получить все категории
+- `POST /api/categories` - Создать категорию
+- `PUT /api/categories/{id}` - Обновить категорию
+- `DELETE /api/categories/{id}` - Удалить категорию
 
-## Learn More
+- `GET /api/video-references` - Получить все видео-референсы
+- `GET /api/video-references/{id}` - Получить видео-референс по ID
+- `POST /api/video-references` - Создать видео-референс
+- `PUT /api/video-references/{id}` - Обновить видео-референс
+- `DELETE /api/video-references/{id}` - Удалить видео-референс
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- `GET /api/tags` - Получить все теги
+- `POST /api/tags` - Создать тег
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 🔑 Особенности
 
-### Code Splitting
+### Автоматическое создание тегов
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+При сохранении видео-референса, если указаны теги через запятую (например: "cinematic, vfx, typography"), система автоматически:
+1. Проверяет существование каждого тега
+2. Если тег не существует - создаёт его
+3. Привязывает все теги к видео-референсу
 
-### Analyzing the Bundle Size
+### Поиск
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+В списке видео-референсов доступен поиск:
+- По ID (точное совпадение)
+- По Source URL (частичное совпадение)
 
-### Making a Progressive Web App
+### Валидация
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+- Обязательные поля помечены звёздочкой (*)
+- URL поля валидируются на корректность
+- JSON поля (Details Public) проверяются на валидность JSON
 
-### Advanced Configuration
+## 🐛 Troubleshooting
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+### Ошибка подключения к API
 
-### Deployment
+Убедитесь, что:
+1. Backend сервер запущен (`php artisan serve`)
+2. URL в `.env` файле правильный
+3. CORS настроен на backend (для Laravel это обычно не требуется в dev режиме)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+### Ошибки при установке зависимостей
 
-### `npm run build` fails to minify
+```bash
+# Очистите кэш npm и node_modules
+rm -rf node_modules package-lock.json
+npm cache clean --force
+npm install
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 📝 Примечания
+
+- Админ-панель не требует авторизации на этапе MVP
+- Все данные отображаются в простом виде (без превью видео)
+- Поиск работает только по ID и Source URL
