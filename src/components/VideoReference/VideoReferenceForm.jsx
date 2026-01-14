@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { videoReferencesAPI, categoriesAPI, tutorialsAPI } from '../../services/api';
+import TagsInput from './TagsInput';
 import './VideoReferenceForm.css';
 
 const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
@@ -24,7 +25,7 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
     has_sound_design: false,
     search_profile: '',
     search_metadata: '',
-    tags: '',
+    tags: [],
     tutorials: [],
   });
 
@@ -59,8 +60,8 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
       const response = await videoReferencesAPI.getById(video.id);
       const data = response.data.data;
       
-      // Format tags as comma-separated string
-      const tagsString = data.tags?.map(tag => tag.name).join(', ') || '';
+      // Format tags as array
+      const tagsArray = data.tags?.map(tag => tag.name) || [];
 
       setFormData({
         title: data.title || '',
@@ -79,7 +80,7 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
         has_sound_design: data.has_sound_design || false,
         search_profile: data.search_profile || '',
         search_metadata: data.search_metadata || '',
-        tags: tagsString,
+        tags: tagsArray,
         tutorials: (data.tutorials || []).map(t => ({
           mode: 'select', // При редактировании всегда select, так как tutorial уже существует
           tutorial_id: t.id,
@@ -172,13 +173,8 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
     setLoading(true);
 
     try {
-      // Подготавливаем теги: разбиваем строку на массив имен
-      const tagNames = formData.tags
-        ? formData.tags
-            .split(',')
-            .map(tag => tag.trim())
-            .filter(tag => tag.length > 0)
-        : [];
+      // Теги уже в формате массива
+      const tagNames = formData.tags || [];
 
       // Prepare tutorials data с учетом mode
       const tutorials = formData.tutorials
@@ -333,13 +329,10 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
             </div>
 
             <div className="form-group">
-              <label>Tags (comma-separated)</label>
-              <input
-                type="text"
-                name="tags"
+              <label>Tags</label>
+              <TagsInput
                 value={formData.tags}
-                onChange={handleChange}
-                placeholder="cinematic, vfx, typography"
+                onChange={(tags) => setFormData(prev => ({ ...prev, tags }))}
               />
             </div>
           </div>

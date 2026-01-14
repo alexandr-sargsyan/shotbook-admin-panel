@@ -75,7 +75,13 @@ export const categoriesAPI = {
 
 // Tags API
 export const tagsAPI = {
-  getAll: () => api.get('/tags'),
+  getAll: (search = '') => {
+    const params = {};
+    if (search) {
+      params.search = search;
+    }
+    return api.get('/tags', { params });
+  },
   create: (data) => api.post('/tags', data),
 };
 
