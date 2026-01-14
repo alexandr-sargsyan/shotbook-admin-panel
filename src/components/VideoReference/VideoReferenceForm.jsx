@@ -8,12 +8,32 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
   const [categories, setCategories] = useState([]);
   const [tutorials, setTutorials] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // Функция для построения плоского списка категорий с учетом иерархии
+  const buildCategoryOptions = (cats, level = 0) => {
+    const options = [];
+    cats.forEach(cat => {
+      // Пропускаем категории с подкатегориями (их нельзя выбрать)
+      if (cat.children && Array.isArray(cat.children) && cat.children.length > 0) {
+        // Добавляем только подкатегории
+        options.push(...buildCategoryOptions(cat.children, level + 1));
+      } else {
+        // Добавляем категорию без подкатегорий
+        const prefix = level > 0 ? '  └─ ' : '';
+        options.push({
+          id: cat.id,
+          name: prefix + cat.name,
+        });
+      }
+    });
+    return options;
+  };
+
   const [formData, setFormData] = useState({
     title: '',
     source_url: '',
     public_summary: '',
     category_id: '',
-    platform: '',
     pacing: '',
     hook_type: '',
     production_level: '',
@@ -67,7 +87,6 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
         source_url: data.source_url || '',
         public_summary: data.public_summary || '',
         category_id: data.category_id || '',
-        platform: data.platform || '',
         pacing: data.pacing || '',
         hook_type: data.hook_type || '',
         production_level: data.production_level || '',
@@ -333,23 +352,12 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
                 required
               >
                 <option value="">Select Category</option>
-                {categories.map((cat) => (
+                {buildCategoryOptions(categories).map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
                   </option>
                 ))}
               </select>
-            </div>
-
-            <div className="form-group">
-              <label>Platform (auto-detected)</label>
-              <input
-                type="text"
-                name="platform"
-                value={formData.platform}
-                readOnly
-                className="readonly"
-              />
             </div>
 
             <div className="form-group">
