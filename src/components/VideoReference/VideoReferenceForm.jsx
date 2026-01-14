@@ -10,22 +10,29 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
 
   // Функция для построения плоского списка категорий с учетом иерархии
-  const buildCategoryOptions = (cats, level = 0) => {
+  const buildCategoryOptions = (cats) => {
     const options = [];
-    cats.forEach(cat => {
-      // Пропускаем категории с подкатегориями (их нельзя выбрать)
-      if (cat.children && Array.isArray(cat.children) && cat.children.length > 0) {
-        // Добавляем только подкатегории
-        options.push(...buildCategoryOptions(cat.children, level + 1));
-      } else {
-        // Добавляем категорию без подкатегорий
-        const prefix = level > 0 ? '  └─ ' : '';
-        options.push({
-          id: cat.id,
-          name: prefix + cat.name,
-        });
-      }
-    });
+    
+    // Рекурсивная функция для обхода всех категорий
+    const traverse = (categories) => {
+      categories.forEach(cat => {
+        // Если у категории есть подкатегории, пропускаем её и обрабатываем только children
+        if (cat.children && Array.isArray(cat.children) && cat.children.length > 0) {
+          // Рекурсивно обрабатываем подкатегории
+          traverse(cat.children);
+        } else {
+          // Добавляем только конечные категории (без подкатегорий)
+          // Префикс добавляем только для подкатегорий (когда есть parent_id)
+          const prefix = cat.parent_id ? '  └─ ' : '';
+          options.push({
+            id: cat.id,
+            name: prefix + cat.name,
+          });
+        }
+      });
+    };
+    
+    traverse(cats);
     return options;
   };
 
