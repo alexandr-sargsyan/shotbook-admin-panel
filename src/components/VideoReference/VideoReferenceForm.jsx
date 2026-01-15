@@ -8,14 +8,15 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
   const [categories, setCategories] = useState([]);
   const [tutorials, setTutorials] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedParentCategoryId, setSelectedParentCategoryId] = useState('');
-  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState('');
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
+  const [expandedCategories, setExpandedCategories] = useState({});
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
     source_url: '',
     public_summary: '',
-    category_id: '',
+    category_ids: [],
     pacing: '',
     hook_type: '',
     production_level: '',
@@ -68,45 +69,16 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
       // Format tags as array
       const tagsArray = data.tags?.map(tag => tag.name) || [];
 
-      // Определяем родительскую категорию и подкатегорию
-      const selectedCategoryId = data.category_id;
-      let parentCategoryId = '';
-      let subcategoryId = '';
+      // Получаем массив ID категорий
+      const categoryIds = data.categories?.map(cat => cat.id) || [];
 
-      if (selectedCategoryId) {
-        // Ищем категорию во всех категориях (включая вложенные)
-        const findCategory = (cats, parentId = null) => {
-          for (const cat of cats) {
-            if (cat.id === selectedCategoryId) {
-              // Если это подкатегория (находится внутри children родительской категории)
-              if (parentId !== null) {
-                parentCategoryId = parentId;
-                subcategoryId = selectedCategoryId;
-              } else {
-                // Если это родительская категория (корневая)
-                parentCategoryId = selectedCategoryId;
-                subcategoryId = '';
-              }
-              return cat;
-            }
-            if (cat.children && Array.isArray(cat.children) && cat.children.length > 0) {
-              const found = findCategory(cat.children, cat.id);
-              if (found) return found;
-            }
-          }
-          return null;
-        };
-        findCategory(categories);
-      }
-
-      setSelectedParentCategoryId(parentCategoryId);
-      setSelectedSubcategoryId(subcategoryId);
+      setSelectedCategoryIds(categoryIds);
 
       setFormData({
         title: data.title || '',
         source_url: data.source_url || '',
         public_summary: data.public_summary || '',
-        category_id: data.category_id || '',
+        category_ids: categoryIds,
         pacing: data.pacing || '',
         hook_type: data.hook_type || '',
         production_level: data.production_level || '',
@@ -141,70 +113,174 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
     }));
   };
 
-  // Обработка выбора родительской категории
-  const handleParentCategoryChange = (e) => {
-    const parentId = e.target.value;
-    setSelectedParentCategoryId(parentId);
-    setSelectedSubcategoryId(''); // Очищаем подкатегорию при смене родительской
-    
-    // Находим родительскую категорию
-    const findCategory = (cats) => {
-      for (const cat of cats) {
-        if (cat.id === parseInt(parentId)) {
-          return cat;
-        }
-        if (cat.children && Array.isArray(cat.children) && cat.children.length > 0) {
-          const found = findCategory(cat.children);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
-    
-    const parentCategory = findCategory(categories);
-    
-    // Если у родительской категории нет подкатегорий, устанавливаем её как выбранную
-    if (parentCategory && (!parentCategory.children || parentCategory.children.length === 0)) {
-      setFormData(prev => ({ ...prev, category_id: parentId }));
-    } else {
-      // Если есть подкатегории, category_id будет установлен при выборе подкатегории
-      setFormData(prev => ({ ...prev, category_id: '' }));
+  // Обработка выбора категории (чекбокс)
+  const handleCategoryToggle = (categoryId, event) => {
+    if (event) {
+      event.stopPropagation();
     }
+    const newCategoryIds = selectedCategoryIds.includes(categoryId)
+      ? selectedCategoryIds.filter(id => id !== categoryId)
+      : [...selectedCategoryIds, categoryId];
+    
+    setSelectedCategoryIds(newCategoryIds);
+    setFormData(prev => ({ ...prev, category_ids: newCategoryIds }));
   };
 
-  // Обработка выбора подкатегории
-  const handleSubcategoryChange = (e) => {
-    const subcategoryId = e.target.value;
-    setSelectedSubcategoryId(subcategoryId);
-    setFormData(prev => ({ ...prev, category_id: subcategoryId }));
+  // Переключение раскрытия/сворачивания категории
+  const toggleCategoryExpand = (categoryId) => {
+    setExpandedCategories((prev) => ({
+      ...prev,
+      [categoryId]: !prev[categoryId],
+    }));
+  };
+
+  // Рекурсивная функция для отображения категорий (как на фронтенде)
+  const renderCategory = (category, level = 0) => {
+    const hasChildren = category.children && Array.isArray(category.children) && category.children.length > 0;
+    const isExpanded = expandedCategories[category.id];
+    const isSelected = selectedCategoryIds.includes(category.id);
+
+    return (
+      <div key={category.id} style={{ marginBottom: '4px' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '8px 0',
+            paddingLeft: `${level * 20 + 12}px`,
+            cursor: 'pointer',
+            borderRadius: '4px',
+            backgroundColor: isSelected ? '#e3f2fd' : 'transparent',
+          }}
+          onMouseEnter={(e) => {
+            if (!isSelected) {
+              e.currentTarget.style.backgroundColor = '#f5f5f5';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isSelected) {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }
+          }}
+        >
+          {/* Чекбокс */}
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={(e) => handleCategoryToggle(category.id, e)}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '18px',
+              height: '18px',
+              cursor: 'pointer',
+              flexShrink: 0,
+              margin: 0,
+            }}
+          />
+          
+          {/* Название категории */}
+          <label
+            onClick={() => handleCategoryToggle(category.id)}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              textAlign: 'left',
+              fontSize: '14px',
+              color: isSelected ? '#1976d2' : '#333',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              flex: 1,
+              userSelect: 'none',
+              fontWeight: isSelected ? 500 : 'normal',
+              margin: 0,
+            }}
+          >
+            {category.name}
+          </label>
+          
+          {/* Стрелка для раскрытия подкатегорий */}
+          {hasChildren && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleCategoryExpand(category.id);
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '14px',
+                color: '#666',
+                padding: '2px 4px',
+                width: '24px',
+                height: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                borderRadius: '4px',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#007bff';
+                e.currentTarget.style.backgroundColor = '#f0f7ff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = '#666';
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              {isExpanded ? '▼' : '▶'}
+            </button>
+          )}
+        </div>
+        {hasChildren && isExpanded && (
+          <div style={{ marginLeft: 0 }}>
+            {category.children.map((child) => renderCategory(child, level + 1))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   // Получаем корневые категории (parent_id === null)
   const rootCategories = categories.filter(cat => !cat.parent_id);
 
-  // Получаем подкатегории выбранной родительской категории
-  const getSubcategories = () => {
-    if (!selectedParentCategoryId) return [];
-    
-    const findCategory = (cats) => {
-      for (const cat of cats) {
-        if (cat.id === parseInt(selectedParentCategoryId)) {
-          return cat;
-        }
-        if (cat.children && Array.isArray(cat.children) && cat.children.length > 0) {
-          const found = findCategory(cat.children);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
-    
-    const parentCategory = findCategory(categories);
-    return parentCategory && parentCategory.children ? parentCategory.children : [];
+  // Получить выбранные категории как объекты
+  const getSelectedCategories = () => {
+    return selectedCategoryIds
+      .map(id => {
+        const findCategory = (cats) => {
+          for (const cat of cats) {
+            if (cat.id === id) return cat;
+            if (cat.children && cat.children.length > 0) {
+              const found = findCategory(cat.children);
+              if (found) return found;
+            }
+          }
+          return null;
+        };
+        return findCategory(categories);
+      })
+      .filter(cat => cat !== null);
   };
 
-  const subcategories = getSubcategories();
-  const hasSubcategories = subcategories.length > 0;
+  // Удалить категорию по ID
+  const handleRemoveCategory = (categoryId, event) => {
+    if (event) {
+      event.stopPropagation();
+    }
+    const newCategoryIds = selectedCategoryIds.filter(id => id !== categoryId);
+    setSelectedCategoryIds(newCategoryIds);
+    setFormData(prev => ({ ...prev, category_ids: newCategoryIds }));
+  };
+
+  // Сохранить выбранные категории из модального окна
+  const handleCategoryModalSave = () => {
+    setFormData(prev => ({ ...prev, category_ids: selectedCategoryIds }));
+    setIsCategoryModalOpen(false);
+  };
 
   const handleTutorialChange = (index, field, value) => {
     setFormData(prev => {
@@ -275,16 +351,9 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
     setLoading(true);
 
     try {
-      // Валидация категории
-      if (!formData.category_id) {
-        toast.error('Please select a category');
-        setLoading(false);
-        return;
-      }
-
-      // Если выбрана родительская категория с подкатегориями, но не выбрана подкатегория
-      if (selectedParentCategoryId && hasSubcategories && !selectedSubcategoryId) {
-        toast.error('Please select a subcategory');
+      // Валидация категорий
+      if (!formData.category_ids || formData.category_ids.length === 0) {
+        toast.error('Please select at least one category');
         setLoading(false);
         return;
       }
@@ -335,7 +404,7 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
       const data = {
         title: formData.title,
         source_url: formData.source_url,
-        category_id: parseInt(formData.category_id),
+        category_ids: formData.category_ids.map(id => parseInt(id)),
         has_visual_effects: formData.has_visual_effects,
         has_3d: formData.has_3d,
         has_animations: formData.has_animations,
@@ -440,42 +509,102 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
           </div>
 
           <div className="form-section">
-            <h3>Category Selection</h3>
-
-            <div className="category-selectors-row">
-              <div className="form-group">
-                <label>Parent Category *</label>
-                <select
-                  name="parent_category_id"
-                  value={selectedParentCategoryId}
-                  onChange={handleParentCategoryChange}
-                  required
-                >
-                  <option value="">Select Parent Category</option>
-                  {rootCategories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>Subcategory {hasSubcategories ? '*' : ''}</label>
-                <select
-                  name="subcategory_id"
-                  value={selectedSubcategoryId}
-                  onChange={handleSubcategoryChange}
-                  disabled={!hasSubcategories}
-                  required={hasSubcategories}
-                >
-                  <option value="">{hasSubcategories ? 'Select Subcategory' : 'No subcategories'}</option>
-                  {subcategories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
+            <h3>Categories *</h3>
+            <div className="form-group">
+              <label>Select Categories (at least one required)</label>
+              <div
+                onClick={() => setIsCategoryModalOpen(true)}
+                style={{
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                  backgroundColor: '#fff',
+                  minHeight: '40px',
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#007bff';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#ddd';
+                }}
+              >
+                {selectedCategoryIds.length > 0 ? (
+                  <>
+                    {getSelectedCategories().map((category) => (
+                      <span
+                        key={category.id}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '6px 12px',
+                          backgroundColor: '#007bff',
+                          color: 'white',
+                          borderRadius: '16px',
+                          fontSize: '13px',
+                          fontWeight: 500,
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {category.name}
+                        <button
+                          type="button"
+                          onClick={(e) => handleRemoveCategory(category.id, e)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'white',
+                            cursor: 'pointer',
+                            fontSize: '18px',
+                            lineHeight: 1,
+                            padding: 0,
+                            width: '18px',
+                            height: '18px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: '50%',
+                            transition: 'background-color 0.2s',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                    <span
+                      style={{
+                        color: '#666',
+                        fontSize: '14px',
+                        marginLeft: 'auto',
+                        paddingLeft: '8px',
+                      }}
+                    >
+                      ▼
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span style={{ 
+                      color: '#999',
+                      fontSize: '14px',
+                      flex: 1
+                    }}>
+                      Click to select categories
+                    </span>
+                    <span style={{ color: '#666', fontSize: '18px' }}>▼</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -718,6 +847,133 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
           </div>
         </form>
       </div>
+
+      {/* Модальное окно для выбора категорий */}
+      {isCategoryModalOpen && (
+        <div 
+          className="modal-overlay" 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+          }}
+          onClick={() => setIsCategoryModalOpen(false)}
+        >
+          <div 
+            className="modal-content" 
+            style={{
+              backgroundColor: '#fff',
+              borderRadius: '8px',
+              padding: '20px',
+              maxWidth: '600px',
+              width: '90%',
+              maxHeight: '80vh',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              marginBottom: '20px',
+              borderBottom: '1px solid #eee',
+              paddingBottom: '15px'
+            }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>Select Categories</h3>
+              <button
+                onClick={() => setIsCategoryModalOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#666',
+                  padding: '0',
+                  width: '30px',
+                  height: '30px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div style={{ 
+              flex: 1,
+              overflowY: 'auto',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              padding: '12px',
+              marginBottom: '20px',
+            }}>
+              {rootCategories.length > 0 ? (
+                rootCategories.map((category) => renderCategory(category))
+              ) : (
+                <div style={{ padding: '20px', textAlign: 'center', color: '#999', fontSize: '14px' }}>
+                  No categories available
+                </div>
+              )}
+            </div>
+
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'flex-end', 
+              gap: '10px',
+              borderTop: '1px solid #eee',
+              paddingTop: '15px'
+            }}>
+              <button
+                type="button"
+                onClick={() => setIsCategoryModalOpen(false)}
+                style={{
+                  padding: '8px 16px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  backgroundColor: '#fff',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleCategoryModalSave}
+                style={{
+                  padding: '8px 16px',
+                  border: 'none',
+                  borderRadius: '4px',
+                  backgroundColor: '#007bff',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#0056b3';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#007bff';
+                }}
+              >
+                Save ({selectedCategoryIds.length})
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

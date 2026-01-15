@@ -11,6 +11,8 @@ const CategoryForm = ({ category, categories, onClose, onSuccess }) => {
     order: 0,
   });
   const [loading, setLoading] = useState(false);
+  const [slugError, setSlugError] = useState('');
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
 
   useEffect(() => {
     if (category) {
@@ -20,19 +22,86 @@ const CategoryForm = ({ category, categories, onClose, onSuccess }) => {
         parent_id: category.parent_id || '',
         order: category.order || 0,
       });
+      setIsSlugManuallyEdited(true);
     }
   }, [category]);
 
+  // Функция для генерации slug из name
+  const generateSlug = (text) => {
+    return text
+      .toLowerCase()
+      .trim()
+      // Транслитерация кириллицы в латиницу (базовая)
+      .replace(/[а-яё]/g, (char) => {
+        const map = {
+          'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e',
+          'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+          'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+          'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch',
+          'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'
+        };
+        return map[char] || char;
+      })
+      // Заменяем пробелы и специальные символы на дефисы
+      .replace(/[^a-z0-9]+/g, '-')
+      // Удаляем дефисы в начале и конце
+      .replace(/^-+|-+$/g, '');
+  };
+
+  // Валидация slug
+  const validateSlug = (slug) => {
+    if (!slug) {
+      return 'Slug is required';
+    }
+    if (!/^[a-z0-9-]+$/.test(slug)) {
+      return 'Slug can only contain lowercase letters, numbers, and hyphens';
+    }
+    if (slug.startsWith('-') || slug.endsWith('-')) {
+      return 'Slug cannot start or end with a hyphen';
+    }
+    return '';
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'order' ? parseInt(value) || 0 : value,
-    }));
+    
+    if (name === 'name' && !isSlugManuallyEdited && !category) {
+      // Автогенерация slug из name при создании новой категории
+      const generatedSlug = generateSlug(value);
+      setFormData(prev => ({
+        ...prev,
+        name: value,
+        slug: generatedSlug,
+      }));
+      setSlugError(validateSlug(generatedSlug));
+    } else if (name === 'slug') {
+      // При ручном редактировании slug
+      setIsSlugManuallyEdited(true);
+      const slugValue = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+      setFormData(prev => ({
+        ...prev,
+        slug: slugValue,
+      }));
+      setSlugError(validateSlug(slugValue));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: name === 'order' ? parseInt(value) || 0 : value,
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Валидация slug перед отправкой
+    const slugValidationError = validateSlug(formData.slug);
+    if (slugValidationError) {
+      setSlugError(slugValidationError);
+      toast.error(slugValidationError);
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -89,7 +158,13 @@ const CategoryForm = ({ category, categories, onClose, onSuccess }) => {
               value={formData.slug}
               onChange={handleChange}
               required
+              className={slugError ? 'error' : ''}
+              placeholder="auto-generated-from-name"
             />
+            {slugError && <span className="error-message">{slugError}</span>}
+            <small className="form-hint">
+              Only lowercase letters, numbers, and hyphens. Auto-generated from name.
+            </small>
           </div>
 
           <div className="form-group">

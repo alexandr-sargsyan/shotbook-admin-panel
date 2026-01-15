@@ -163,7 +163,11 @@ const VideoReferenceList = () => {
                     {video.source_url}
                   </a>
                 </td>
-                <td>{video.category?.name || '-'}</td>
+                <td>
+                  {video.categories && video.categories.length > 0
+                    ? video.categories.map(cat => cat.name).join(', ')
+                    : '-'}
+                </td>
                 <td className="actions-cell">
                   <button
                     onClick={() => handleEdit(video)}
