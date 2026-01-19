@@ -31,6 +31,7 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
     search_metadata: '',
     tags: [],
     tutorials: [],
+    rating: 1,
   });
 
   useEffect(() => {
@@ -102,6 +103,7 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
         search_profile: data.search_profile || '',
         search_metadata: data.search_metadata || '',
         tags: tagsArray,
+        rating: data.rating !== undefined && data.rating !== null ? data.rating : 1,
         tutorials: (data.tutorials || []).map(t => ({
           mode: 'select', // При редактировании всегда select, так как tutorial уже существует
           tutorial_id: t.id,
@@ -121,7 +123,7 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: type === 'checkbox' ? checked : (type === 'range' ? parseInt(value) : value),
     }));
   };
 
@@ -330,6 +332,9 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
         data.search_metadata = formData.search_metadata.trim();
       }
 
+      // Rating всегда отправляем (по умолчанию 1)
+      data.rating = formData.rating !== undefined && formData.rating !== null ? parseInt(formData.rating) : 1;
+
       // Всегда отправляем tutorials (даже если пустой массив) для явной синхронизации
       data.tutorials = tutorials;
 
@@ -488,6 +493,25 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
                 <option value="mid">Mid</option>
                 <option value="high">High</option>
               </select>
+            </div>
+
+            <div className="form-group">
+              <label>Rating: {formData.rating}</label>
+              <div className="rating-slider-container">
+                <input
+                  type="range"
+                  name="rating"
+                  min="0"
+                  max="10"
+                  value={formData.rating}
+                  onChange={handleChange}
+                  className="rating-slider"
+                />
+                <div className="rating-labels">
+                  <span>0</span>
+                  <span>10</span>
+                </div>
+              </div>
             </div>
 
             <div className="form-group checkboxes">

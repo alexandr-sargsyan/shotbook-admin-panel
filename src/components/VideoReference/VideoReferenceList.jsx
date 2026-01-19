@@ -143,13 +143,14 @@ const VideoReferenceList = () => {
             <th>Title</th>
             <th>Source URL</th>
             <th>Category</th>
+            <th>Rating</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {videoReferences.length === 0 ? (
             <tr>
-              <td colSpan="5" className="empty-state">
+              <td colSpan="6" className="empty-state">
                 No video references found
               </td>
             </tr>
@@ -168,6 +169,7 @@ const VideoReferenceList = () => {
                     ? video.categories.map(cat => cat.name).join(', ')
                     : '-'}
                 </td>
+                <td>{video.rating !== undefined && video.rating !== null ? video.rating : 1}</td>
                 <td className="actions-cell">
                   <button
                     onClick={() => handleEdit(video)}
