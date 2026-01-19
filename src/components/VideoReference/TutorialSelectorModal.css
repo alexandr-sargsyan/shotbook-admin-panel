@@ -1,0 +1,61 @@
+.tutorial-selector-modal {
+  max-width: 500px;
+  max-height: 80vh;
+}
+
+.tutorial-selector-modal-content {
+  padding: 20px;
+}
+
+.tutorial-search-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 16px;
+  outline: none;
+}
+
+.tutorial-search-input:focus {
+  border-color: #007bff;
+}
+
+.tutorial-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.tutorial-item {
+  padding: 10px 16px;
+  background-color: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  text-align: left;
+  transition: all 0.2s;
+  color: #333;
+}
+
+.tutorial-item:hover {
+  background-color: #e9ecef;
+  border-color: #007bff;
+}
+
+.tutorial-item.selected {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.no-tutorials {
+  padding: 20px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+  grid-column: 1 / -1;
+}

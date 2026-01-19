@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import TutorialSelectorModal from './TutorialSelectorModal';
 import './TutorialEditor.css';
 
 const TutorialEditor = ({
@@ -9,9 +10,23 @@ const TutorialEditor = ({
   onRemove,
 }) => {
   const mode = tutorial.mode || 'new';
+  const [showTutorialModal, setShowTutorialModal] = useState(false);
 
   const handleChange = (field, value) => {
     onChange(index, field, value);
+  };
+
+  const handleTutorialSelect = (tutorial) => {
+    handleChange('tutorial_id', tutorial.id);
+    // Обновляем label и tutorial_url из выбранного туториала
+    handleChange('label', tutorial.label || '');
+    handleChange('tutorial_url', tutorial.tutorial_url || '');
+  };
+
+  const getSelectedTutorialLabel = () => {
+    if (!tutorial.tutorial_id) return 'Select Tutorial';
+    const selectedTutorial = availableTutorials.find(t => t.id === parseInt(tutorial.tutorial_id));
+    return selectedTutorial ? (selectedTutorial.label || `Tutorial #${selectedTutorial.id}`) : 'Select Tutorial';
   };
 
   return (
@@ -49,20 +64,27 @@ const TutorialEditor = ({
       </div>
 
       {mode === 'select' ? (
-        // Режим Select: показываем селектор существующих tutorials
+        // Режим Select: показываем кнопку для открытия модального окна
         <div className="form-group">
           <label>Select Tutorial *</label>
-          <select
-            value={tutorial.tutorial_id || ''}
-            onChange={(e) => handleChange('tutorial_id', e.target.value)}
-          >
-            <option value="">Select Tutorial</option>
-            {availableTutorials.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.label || `Tutorial #${t.id}`}
-              </option>
-            ))}
-          </select>
+          <div className="tutorial-select-wrapper">
+            <button
+              type="button"
+              className="tutorial-select-btn"
+              onClick={() => setShowTutorialModal(true)}
+            >
+              <span className={tutorial.tutorial_id ? '' : 'placeholder'}>
+                {getSelectedTutorialLabel()}
+              </span>
+              <span className="tutorial-select-arrow">▼</span>
+            </button>
+          </div>
+          <TutorialSelectorModal
+            isOpen={showTutorialModal}
+            onClose={() => setShowTutorialModal(false)}
+            onSelect={handleTutorialSelect}
+            selectedTutorialId={tutorial.tutorial_id}
+          />
         </div>
       ) : (
         // Режим New: показываем поля для создания нового tutorial

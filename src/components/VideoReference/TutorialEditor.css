@@ -98,3 +98,40 @@
 .btn-delete-small:hover {
   background-color: #c0392b;
 }
+
+.tutorial-select-wrapper {
+  position: relative;
+}
+
+.tutorial-select-btn {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  transition: all 0.2s;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.tutorial-select-btn:hover {
+  border-color: #3498db;
+  background-color: #f8f9fa;
+}
+
+.tutorial-select-btn .placeholder {
+  color: #999;
+}
+
+.tutorial-select-arrow {
+  color: #666;
+  font-size: 12px;
+  flex-shrink: 0;
+  margin-left: 8px;
+}

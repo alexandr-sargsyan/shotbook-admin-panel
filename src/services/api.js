@@ -92,7 +92,13 @@ export const tagsAPI = {
 
 // Tutorials API
 export const tutorialsAPI = {
-  getAll: () => api.get('/tutorials'),
+  getAll: (search = '') => {
+    const params = {};
+    if (search) {
+      params.search = search;
+    }
+    return api.get('/tutorials', { params });
+  },
 };
 
 export default api;
