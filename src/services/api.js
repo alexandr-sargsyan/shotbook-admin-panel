@@ -73,6 +73,11 @@ export const categoriesAPI = {
   delete: (id) => api.delete(`/admin/categories/${id}`),
 };
 
+// Hooks API (Admin routes)
+export const hooksAPI = {
+  getAll: () => api.get('/admin/hooks'),
+};
+
 // Tags API
 export const tagsAPI = {
   getAll: (search = '') => {

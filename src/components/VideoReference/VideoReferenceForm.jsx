@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { videoReferencesAPI, categoriesAPI, tutorialsAPI } from '../../services/api';
+import { videoReferencesAPI, categoriesAPI, tutorialsAPI, hooksAPI } from '../../services/api';
 import TagsInput from './TagsInput';
 import CategoryModal from './CategoryModal';
 import TutorialEditor from './TutorialEditor';
@@ -8,6 +8,7 @@ import './VideoReferenceForm.css';
 
 const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
   const [categories, setCategories] = useState([]);
+  const [hooks, setHooks] = useState([]);
   const [tutorials, setTutorials] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
@@ -19,7 +20,7 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
     public_summary: '',
     category_ids: [],
     pacing: '',
-    hook_type: '',
+    hook_id: '',
     production_level: '',
     has_visual_effects: false,
     has_3d: false,
@@ -34,6 +35,7 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
 
   useEffect(() => {
     loadCategories();
+    loadHooks();
     loadTutorials();
   }, []);
 
@@ -50,6 +52,15 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
       setCategories(response.data.data);
     } catch (error) {
       console.error('Error loading categories:', error);
+    }
+  };
+
+  const loadHooks = async () => {
+    try {
+      const response = await hooksAPI.getAll();
+      setHooks(response.data.data);
+    } catch (error) {
+      console.error('Error loading hooks:', error);
     }
   };
 
@@ -81,7 +92,7 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
         public_summary: data.public_summary || '',
         category_ids: categoryIds,
         pacing: data.pacing || '',
-        hook_type: data.hook_type || '',
+        hook_id: data.hook?.id || '',
         production_level: data.production_level || '',
         has_visual_effects: data.has_visual_effects || false,
         has_3d: data.has_3d || false,
@@ -305,8 +316,10 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
         data.pacing = formData.pacing.trim();
       }
 
-      if (formData.hook_type && formData.hook_type.trim()) {
-        data.hook_type = formData.hook_type.trim();
+      if (formData.hook_id) {
+        data.hook_id = formData.hook_id;
+      } else {
+        data.hook_id = null;
       }
 
       if (formData.production_level && formData.production_level.trim()) {
@@ -448,13 +461,19 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
             </div>
 
             <div className="form-group">
-              <label>Hook Type</label>
-              <input
-                type="text"
-                name="hook_type"
-                value={formData.hook_type}
+              <label>Hook</label>
+              <select
+                name="hook_id"
+                value={formData.hook_id}
                 onChange={handleChange}
-              />
+              >
+                <option value="">Select Hook</option>
+                {hooks.map((hook) => (
+                  <option key={hook.id} value={hook.id}>
+                    {hook.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="form-group">
