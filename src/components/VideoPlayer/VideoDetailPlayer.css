@@ -1,0 +1,122 @@
+/* Стили для VideoDetailPlayer - используется на детальной странице */
+.video-detail-player {
+  position: relative;
+  width: 100%;
+  margin: 0.5cm auto; /* 0.5 см сверху и снизу */
+  padding: 0 5mm; /* 5 мм слева и справа */
+  box-sizing: border-box;
+}
+
+.video-detail-player .video-container {
+  position: relative;
+  width: 100%;
+  padding-bottom: 177.78%; /* 9:16 aspect ratio */
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.video-detail-player .video-container iframe,
+.video-detail-player .video-container blockquote {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.video-detail-player .video-error {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 16px;
+  background: #f5f5f5;
+}
+
+/* Специальные стили для Facebook на детальной странице */
+.video-detail-player .facebook-player {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.video-detail-player .facebook-player iframe {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  transform: none !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+}
+
+/* Адаптивность - мобильные устройства */
+@media (max-width: 480px) {
+  .video-detail-player {
+    max-width: 100%;
+    width: calc(100% - 10mm); /* 5 мм с каждой стороны */
+    margin: 0.5cm auto;
+    padding: 0;
+  }
+
+  .video-detail-player .video-container {
+    padding-bottom: 177.78%;
+    border-radius: 0;
+  }
+}
+
+/* Планшеты (портрет) */
+@media (min-width: 481px) and (max-width: 768px) {
+  .video-detail-player {
+    max-width: 380px;
+    width: calc(100% - 10mm); /* 5 мм с каждой стороны */
+    margin: 0.5cm auto;
+  }
+}
+
+/* Планшеты (ландшафт) и маленькие ноутбуки */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .video-detail-player {
+    max-width: 420px;
+    width: calc(100% - 10mm);
+    margin: 0.5cm auto;
+  }
+}
+
+/* Средние экраны */
+@media (min-width: 1025px) and (max-width: 1440px) {
+  .video-detail-player {
+    max-width: 460px;
+    width: calc(100% - 10mm);
+    margin: 0.5cm auto;
+  }
+}
+
+/* Большие экраны */
+@media (min-width: 1441px) {
+  .video-detail-player {
+    max-width: 500px;
+    width: calc(100% - 10mm);
+    margin: 0.5cm auto;
+  }
+}

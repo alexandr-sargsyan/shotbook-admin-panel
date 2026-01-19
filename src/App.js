@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Categories from './pages/Categories';
 import Login from './pages/Login';
 import VideoReferences from './pages/VideoReferences';
+import VideoPreview from './pages/VideoPreview';
 import './App.css';
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
                     <Route path="/" element={<Navigate to="/video-references" replace />} />
                     <Route path="/categories" element={<Categories />} />
                     <Route path="/video-references" element={<VideoReferences />} />
+                    <Route path="/video-preview" element={<VideoPreview />} />
                   </Routes>
                 </div>
                 <ToastContainer

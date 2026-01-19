@@ -83,6 +83,12 @@ const Sidebar = () => {
         >
           Video References
         </Link>
+        <Link
+          to="/video-preview"
+          className={location.pathname === '/video-preview' ? 'active' : ''}
+        >
+          Video Preview
+        </Link>
       </nav>
       {/* Mobile dropdown menu */}
       {showMobileMenu && (
@@ -100,6 +106,13 @@ const Sidebar = () => {
             onClick={handleNavClick}
           >
             Video References
+          </Link>
+          <Link
+            to="/video-preview"
+            className={location.pathname === '/video-preview' ? 'active' : ''}
+            onClick={handleNavClick}
+          >
+            Video Preview
           </Link>
         </div>
       )}

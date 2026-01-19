@@ -1,0 +1,118 @@
+/* Стили для VideoListPlayer - используется в списке видео (VideoCard) */
+.video-list-player {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.video-list-player .video-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding-bottom: 0; /* Переопределяем padding-bottom из базовых стилей */
+  background: #000;
+  border-radius: 0; /* Без скругления в списке */
+  overflow: hidden;
+  box-shadow: none; /* Без тени в списке */
+}
+
+.video-list-player .video-container iframe,
+.video-list-player .video-container blockquote {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Специальные стили для Instagram в списке */
+.video-list-player .instagram-player {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Instagram blockquote - убираем все отступы и выравниваем */
+.video-list-player .instagram-player blockquote.instagram-media {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+  transform: none !important;
+}
+
+/* Instagram iframe (когда embed.js заменил blockquote) */
+.video-list-player .instagram-player iframe {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  transform: none !important;
+}
+
+/* Специальные стили для Facebook в списке */
+.video-list-player .facebook-player {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.video-list-player .facebook-player iframe {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  transform: none !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+}
+
+.video-list-player .video-error {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 14px;
+  background: #f5f5f5;
+}
