@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { tagsAPI } from '../../services/api';
+import ErrorModal from '../ErrorModal';
 import './TagsInput.css';
 
 const TagsInput = ({ value = [], onChange }) => {
@@ -9,6 +10,7 @@ const TagsInput = ({ value = [], onChange }) => {
   const [showAllTagsModal, setShowAllTagsModal] = useState(false);
   const [allTags, setAllTags] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [errorModal, setErrorModal] = useState({ isOpen: false, message: '' });
   const inputRef = useRef(null);
   const suggestionsRef = useRef(null);
 
@@ -69,9 +71,9 @@ const TagsInput = ({ value = [], onChange }) => {
     }
   };
 
-  // Валидация: только латинские буквы, без пробелов
+  // Валидация: латинские буквы и цифры, без пробелов
   const validateTag = (tag) => {
-    return /^[a-zA-Z]+$/.test(tag);
+    return /^[a-zA-Z0-9]+$/.test(tag);
   };
 
   const addTag = (tagName) => {
@@ -83,7 +85,10 @@ const TagsInput = ({ value = [], onChange }) => {
 
     // Валидация
     if (!validateTag(trimmed)) {
-      alert('Tag can only contain Latin letters without spaces');
+      setErrorModal({
+        isOpen: true,
+        message: 'Tag can only contain Latin letters and numbers without spaces'
+      });
       return;
     }
 
@@ -161,7 +166,7 @@ const TagsInput = ({ value = [], onChange }) => {
               setShowSuggestions(true);
             }
           }}
-          placeholder="Enter tag name (Latin letters only)"
+          placeholder="Enter tag name (Latin letters and numbers only)"
           className="tags-input"
         />
         <button
@@ -236,6 +241,13 @@ const TagsInput = ({ value = [], onChange }) => {
           </div>
         </div>
       )}
+
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={() => setErrorModal({ isOpen: false, message: '' })}
+        title="Validation Error"
+        message={errorModal.message}
+      />
     </div>
   );
 };
