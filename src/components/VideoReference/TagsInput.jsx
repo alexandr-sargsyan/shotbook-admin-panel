@@ -71,9 +71,9 @@ const TagsInput = ({ value = [], onChange }) => {
     }
   };
 
-  // Валидация: латинские буквы и цифры, без пробелов
+  // Валидация: латинские буквы, цифры и пробелы
   const validateTag = (tag) => {
-    return /^[a-zA-Z0-9]+$/.test(tag);
+    return /^[a-zA-Z0-9\s]+$/.test(tag);
   };
 
   const addTag = (tagName) => {
@@ -87,7 +87,7 @@ const TagsInput = ({ value = [], onChange }) => {
     if (!validateTag(trimmed)) {
       setErrorModal({
         isOpen: true,
-        message: 'Tag can only contain Latin letters and numbers without spaces'
+        message: 'Tag can only contain Latin letters and numbers'
       });
       return;
     }
@@ -166,7 +166,7 @@ const TagsInput = ({ value = [], onChange }) => {
               setShowSuggestions(true);
             }
           }}
-          placeholder="Enter tag name (Latin letters and numbers only)"
+          placeholder="Enter tag name (Latin letters and numbers)"
           className="tags-input"
         />
         <button
