@@ -123,6 +123,8 @@
   resize: vertical;
 }
 
+/* Simple Rich Text Editor styles are in SimpleRichTextEditor.css */
+
 .checkboxes .checkbox-group {
   display: flex;
   flex-direction: column;

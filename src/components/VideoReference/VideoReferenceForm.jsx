@@ -4,6 +4,7 @@ import { videoReferencesAPI, categoriesAPI, tutorialsAPI, hooksAPI } from '../..
 import TagsInput from './TagsInput';
 import CategoryModal from './CategoryModal';
 import TutorialEditor from './TutorialEditor';
+import SimpleRichTextEditor from './SimpleRichTextEditor';
 import './VideoReferenceForm.css';
 
 const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
@@ -18,6 +19,7 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
     title: '',
     source_url: '',
     public_summary: '',
+    public_summary_html: '',
     category_ids: [],
     pacing: '',
     hook_id: '',
@@ -90,6 +92,7 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
         title: data.title || '',
         source_url: data.source_url || '',
         public_summary: data.public_summary || '',
+        public_summary_html: data.public_summary_html || '',
         category_ids: categoryIds,
         pacing: data.pacing || '',
         hook_id: data.hook?.id || '',
@@ -308,8 +311,8 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
       };
 
       // Добавляем опциональные поля только если они не пустые
-      if (formData.public_summary && formData.public_summary.trim()) {
-        data.public_summary = formData.public_summary.trim();
+      if (formData.public_summary_html && formData.public_summary_html.trim()) {
+        data.public_summary_html = formData.public_summary_html.trim();
       }
 
       if (formData.pacing && formData.pacing.trim()) {
@@ -385,11 +388,10 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
 
             <div className="form-group">
               <label>Public Summary</label>
-              <textarea
-                name="public_summary"
-                value={formData.public_summary}
-                onChange={handleChange}
-                rows="3"
+              <SimpleRichTextEditor
+                value={formData.public_summary_html}
+                onChange={(value) => setFormData(prev => ({ ...prev, public_summary_html: value }))}
+                placeholder="Enter public summary with formatting..."
               />
             </div>
 
