@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { videoReferencesAPI, categoriesAPI, tutorialsAPI, hooksAPI } from '../../services/api';
 import TagsInput from './TagsInput';
@@ -14,6 +14,7 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const formRef = useRef(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -357,10 +358,22 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
       <div className="modal-content large" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{video ? 'Edit Video Reference' : 'Add Video Reference'}</h2>
-          <button className="close-btn" onClick={onClose}>×</button>
+          <div className="modal-header-actions">
+            {video && (
+              <button
+                type="button"
+                className="header-update-btn"
+                onClick={() => formRef.current?.requestSubmit()}
+                disabled={loading}
+              >
+                {loading ? 'Saving...' : 'Update'}
+              </button>
+            )}
+            <button className="close-btn" onClick={onClose}>×</button>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="video-reference-form">
+        <form ref={formRef} onSubmit={handleSubmit} className="video-reference-form">
           <div className="form-section">
             <h3>Display Fields</h3>
             
