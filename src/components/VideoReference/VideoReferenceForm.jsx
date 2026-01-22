@@ -28,7 +28,6 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
     has_typography: false,
     has_sound_design: false,
     search_profile: '',
-    search_metadata: '',
     tags: [],
     tutorials: [],
     rating: 1,
@@ -101,7 +100,6 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
         has_typography: data.has_typography || false,
         has_sound_design: data.has_sound_design || false,
         search_profile: data.search_profile || '',
-        search_metadata: data.search_metadata || '',
         tags: tagsArray,
         rating: data.rating !== undefined && data.rating !== null ? data.rating : 1,
         tutorials: (data.tutorials || []).map(t => ({
@@ -326,10 +324,6 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
 
       if (formData.production_level && formData.production_level.trim()) {
         data.production_level = formData.production_level.trim();
-      }
-
-      if (formData.search_metadata && formData.search_metadata.trim()) {
-        data.search_metadata = formData.search_metadata.trim();
       }
 
       // Rating всегда отправляем (по умолчанию 1)
@@ -570,23 +564,12 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
             <h3>Search Fields</h3>
 
             <div className="form-group">
-              <label>Search Profile *</label>
+              <label>Search Profile</label>
               <textarea
                 name="search_profile"
                 value={formData.search_profile}
                 onChange={handleChange}
                 rows="4"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Search Metadata</label>
-              <textarea
-                name="search_metadata"
-                value={formData.search_metadata}
-                onChange={handleChange}
-                rows="3"
               />
             </div>
           </div>
