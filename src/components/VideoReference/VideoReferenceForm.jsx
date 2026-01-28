@@ -628,6 +628,7 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
         categories={categories}
         selectedCategoryIds={selectedCategoryIds}
         onSave={handleCategoryModalSave}
+        onCategoriesReload={loadCategories}
       />
     </div>
   );

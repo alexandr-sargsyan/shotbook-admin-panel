@@ -113,12 +113,14 @@ const CategoryForm = ({ category, categories, onClose, onSuccess }) => {
       if (category) {
         await categoriesAPI.update(category.id, data);
         toast.success('Category updated successfully');
+        onSuccess();
       } else {
-        await categoriesAPI.create(data);
+        const response = await categoriesAPI.create(data);
         toast.success('Category created successfully');
+        // Передаем ID созданной категории в onSuccess
+        const newCategoryId = response.data?.data?.id || null;
+        onSuccess(newCategoryId);
       }
-
-      onSuccess();
     } catch (error) {
       console.error('Error saving category:', error);
       toast.error(error.response?.data?.message || 'Error saving category');

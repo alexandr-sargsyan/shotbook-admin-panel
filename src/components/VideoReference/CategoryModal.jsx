@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import CategoryForm from '../Category/CategoryForm';
 import './CategoryModal.css';
 
 const CategoryModal = ({ 
@@ -6,10 +7,12 @@ const CategoryModal = ({
   onClose, 
   categories = [], 
   selectedCategoryIds = [], 
-  onSave 
+  onSave,
+  onCategoriesReload
 }) => {
   const [expandedCategories, setExpandedCategories] = useState({});
   const [localSelectedIds, setLocalSelectedIds] = useState(selectedCategoryIds);
+  const [showCategoryForm, setShowCategoryForm] = useState(false);
 
   // Синхронизируем с пропсами
   useEffect(() => {
@@ -106,6 +109,43 @@ const CategoryModal = ({
     onClose();
   };
 
+  // Функция для получения плоского списка всех категорий (для CategoryForm)
+  const getAllCategoriesFlat = (cats) => {
+    let result = [];
+    cats.forEach(cat => {
+      result.push(cat);
+      if (cat.children) {
+        result = result.concat(getAllCategoriesFlat(cat.children));
+      }
+    });
+    return result;
+  };
+
+  const handleCategoryFormClose = () => {
+    setShowCategoryForm(false);
+  };
+
+  const handleCategoryFormSuccess = async (newCategoryId) => {
+    // Перезагружаем список категорий
+    if (onCategoriesReload) {
+      await onCategoriesReload();
+    }
+    
+    // Автоматически добавляем созданную категорию к выбранным
+    if (newCategoryId) {
+      setLocalSelectedIds((prev) => {
+        if (!prev.includes(newCategoryId)) {
+          return [...prev, newCategoryId];
+        }
+        return prev;
+      });
+    }
+    
+    setShowCategoryForm(false);
+  };
+
+  const allCategoriesFlat = getAllCategoriesFlat(categories);
+
   if (!isOpen) return null;
 
   return (
@@ -113,12 +153,21 @@ const CategoryModal = ({
       <div className="category-modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="category-modal-header">
           <h3>Select Categories</h3>
-          <button
-            onClick={onClose}
-            className="category-modal-close-btn"
-          >
-            ×
-          </button>
+          <div className="category-modal-header-actions">
+            <button
+              onClick={() => setShowCategoryForm(true)}
+              className="category-modal-add-btn"
+              type="button"
+            >
+              Add Category
+            </button>
+            <button
+              onClick={onClose}
+              className="category-modal-close-btn"
+            >
+              ×
+            </button>
+          </div>
         </div>
         
         <div className="category-modal-body">
@@ -148,6 +197,16 @@ const CategoryModal = ({
           </button>
         </div>
       </div>
+
+      {/* Модальное окно для создания категории */}
+      {showCategoryForm && (
+        <CategoryForm
+          category={null}
+          categories={allCategoriesFlat}
+          onClose={handleCategoryFormClose}
+          onSuccess={handleCategoryFormSuccess}
+        />
+      )}
     </div>
   );
 };

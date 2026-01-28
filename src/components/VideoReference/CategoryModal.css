@@ -39,6 +39,31 @@
   font-weight: 600;
 }
 
+.category-modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.category-modal-add-btn {
+  padding: 6px 12px;
+  border: 1px solid #007bff;
+  background-color: #007bff;
+  color: #fff;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.category-modal-add-btn:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
 .category-modal-close-btn {
   background: none;
   border: none;
