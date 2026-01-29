@@ -30,6 +30,7 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
     has_animations: false,
     has_typography: false,
     has_sound_design: false,
+    has_ai: false,
     search_profile: '',
     tags: [],
     tutorials: [],
@@ -103,6 +104,7 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
         has_animations: data.has_animations || false,
         has_typography: data.has_typography || false,
         has_sound_design: data.has_sound_design || false,
+        has_ai: data.has_ai || false,
         search_profile: data.search_profile || '',
         tags: tagsArray,
         rating: data.rating !== undefined && data.rating !== null ? data.rating : 1,
@@ -307,6 +309,7 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
         has_animations: formData.has_animations,
         has_typography: formData.has_typography,
         has_sound_design: formData.has_sound_design,
+        has_ai: formData.has_ai,
         search_profile: formData.search_profile,
         tags: tagNames, // Теги всегда отправляем (валидация требует минимум 1 при создании)
       };
@@ -570,6 +573,15 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
                     onChange={handleChange}
                   />
                   Has Sound Design
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    name="has_ai"
+                    checked={formData.has_ai}
+                    onChange={handleChange}
+                  />
+                  Has AI
                 </label>
               </div>
             </div>
