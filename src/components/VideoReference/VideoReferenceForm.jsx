@@ -5,6 +5,7 @@ import TagsInput from './TagsInput';
 import CategoryModal from './CategoryModal';
 import TutorialEditor from './TutorialEditor';
 import SimpleRichTextEditor from './SimpleRichTextEditor';
+import VideoCard from '../VideoCard/VideoCard';
 import './VideoReferenceForm.css';
 
 const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
@@ -14,6 +15,9 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [previewVideoData, setPreviewVideoData] = useState(null);
+  const [previewError, setPreviewError] = useState('');
   const formRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -75,6 +79,187 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
     } catch (error) {
       console.error('Error loading tutorials:', error);
     }
+  };
+
+  // Функции для определения платформы и извлечения video ID
+  const detectPlatform = (url) => {
+    if (!url || !url.trim()) {
+      return null;
+    }
+
+    const urlLower = url.toLowerCase().trim();
+
+    if (urlLower.includes('youtube.com') || urlLower.includes('youtu.be')) {
+      return 'youtube';
+    }
+
+    if (urlLower.includes('tiktok.com')) {
+      return 'tiktok';
+    }
+
+    if (urlLower.includes('instagram.com')) {
+      return 'instagram';
+    }
+
+    if (urlLower.includes('facebook.com')) {
+      return 'facebook';
+    }
+
+    return null;
+  };
+
+  const extractYouTubeId = (url) => {
+    const patterns = [
+      /youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
+      /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+      /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+      /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+      /m\.youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
+    ];
+
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) {
+        return match[1];
+      }
+    }
+    return null;
+  };
+
+  const extractTikTokId = (url) => {
+    const match = url.match(/tiktok\.com\/@[^\/]+\/video\/(\d+)/);
+    if (match) {
+      return match[1];
+    }
+
+    const mobileMatch = url.match(/m\.tiktok\.com\/v\/(\d+)/);
+    if (mobileMatch) {
+      return mobileMatch[1];
+    }
+
+    return null;
+  };
+
+  const extractInstagramId = (url) => {
+    const patterns = [
+      /instagram\.com\/p\/([a-zA-Z0-9_-]+)/,
+      /instagram\.com\/reel\/([a-zA-Z0-9_-]+)/,
+      /instagram\.com\/tv\/([a-zA-Z0-9_-]+)/,
+    ];
+
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) {
+        return match[1];
+      }
+    }
+    return null;
+  };
+
+  const normalizeFacebookUrl = (url) => {
+    try {
+      const urlObj = new URL(url);
+      const path = urlObj.pathname;
+      const search = urlObj.search;
+
+      if (path.includes('/watch') && search) {
+        const params = new URLSearchParams(search);
+        const videoId = params.get('v');
+        if (videoId) {
+          return `https://www.facebook.com/watch/?v=${videoId}`;
+        }
+      }
+
+      return `https://www.facebook.com${path}`;
+    } catch (error) {
+      console.warn('Facebook: Не удалось нормализовать URL:', url, error);
+      return url;
+    }
+  };
+
+  const extractFacebookId = (url) => {
+    const normalizedUrl = normalizeFacebookUrl(url);
+
+    const reelMatch = normalizedUrl.match(/facebook\.com\/reel\/([a-zA-Z0-9_-]+)/);
+    if (reelMatch) {
+      return reelMatch[1];
+    }
+
+    const watchMatch = normalizedUrl.match(/facebook\.com\/watch\/\?v=(\d+)/);
+    if (watchMatch) {
+      return watchMatch[1];
+    }
+
+    const videosMatch = normalizedUrl.match(/facebook\.com\/([^\/]+)\/videos\/(\d+)/);
+    if (videosMatch) {
+      return videosMatch[2];
+    }
+
+    const postsMatch = normalizedUrl.match(/facebook\.com\/([^\/]+)\/posts\/(\d+)/);
+    if (postsMatch) {
+      return postsMatch[2];
+    }
+
+    return null;
+  };
+
+  // Обработчик кнопки Preview
+  const handlePreview = () => {
+    setPreviewError('');
+    setPreviewVideoData(null);
+
+    const url = formData.source_url.trim();
+
+    if (!url) {
+      setPreviewError('Please enter a URL');
+      setIsPreviewModalOpen(true);
+      return;
+    }
+
+    // Автоматически определяем платформу
+    const platform = detectPlatform(url);
+
+    if (!platform) {
+      setPreviewError('Could not detect platform from URL. Supported platforms: YouTube, TikTok, Instagram, Facebook');
+      setIsPreviewModalOpen(true);
+      return;
+    }
+
+    let videoId = null;
+
+    switch (platform) {
+      case 'youtube':
+        videoId = extractYouTubeId(url);
+        break;
+      case 'tiktok':
+        videoId = extractTikTokId(url);
+        break;
+      case 'instagram':
+        videoId = extractInstagramId(url);
+        break;
+      case 'facebook':
+        videoId = extractFacebookId(url);
+        break;
+      default:
+        setPreviewError('Unsupported platform');
+        setIsPreviewModalOpen(true);
+        return;
+    }
+
+    if (!videoId) {
+      setPreviewError(`Could not extract video ID from URL for platform: ${platform}`);
+      setIsPreviewModalOpen(true);
+      return;
+    }
+
+    setPreviewVideoData({
+      platform,
+      platform_video_id: videoId,
+      source_url: url,
+      title: formData.title || 'Preview Video',
+    });
+
+    setIsPreviewModalOpen(true);
   };
 
   const loadVideoData = async () => {
@@ -393,13 +578,24 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
 
             <div className="form-group">
               <label>Source URL *</label>
-              <input
-                type="url"
-                name="source_url"
-                value={formData.source_url}
-                onChange={handleChange}
-                required
-              />
+              <div className="source-url-wrapper">
+                <input
+                  type="url"
+                  name="source_url"
+                  value={formData.source_url}
+                  onChange={handleChange}
+                  required
+                  className="source-url-input"
+                />
+                <button
+                  type="button"
+                  onClick={handlePreview}
+                  disabled={!formData.source_url.trim()}
+                  className="btn-preview"
+                >
+                  Preview
+                </button>
+              </div>
             </div>
 
             <div className="form-group">
@@ -642,6 +838,24 @@ const VideoReferenceForm = ({ video, onClose, onSuccess }) => {
         onSave={handleCategoryModalSave}
         onCategoriesReload={loadCategories}
       />
+
+      {/* Модальное окно для превью видео */}
+      {isPreviewModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsPreviewModalOpen(false)}>
+          <div className="modal-content preview-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="preview-close-btn" onClick={() => setIsPreviewModalOpen(false)}>×</button>
+            <div className="preview-modal-content">
+              {previewError ? (
+                <div className="preview-error">{previewError}</div>
+              ) : previewVideoData ? (
+                <div className="preview-video-wrapper">
+                  <VideoCard video={previewVideoData} />
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

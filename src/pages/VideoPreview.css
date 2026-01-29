@@ -61,6 +61,21 @@
   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
+.detected-platform {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background-color: #e7f3ff;
+  border: 1px solid #b3d9ff;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #0066cc;
+}
+
+.detected-platform strong {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
 .platform-select {
   width: 100%;
   padding: 10px 12px;

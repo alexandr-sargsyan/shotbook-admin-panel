@@ -5,9 +5,49 @@ import './VideoPreview.css';
 
 const VideoPreview = () => {
   const [url, setUrl] = useState('');
-  const [platform, setPlatform] = useState('instagram');
+  const [detectedPlatform, setDetectedPlatform] = useState(null);
   const [videoData, setVideoData] = useState(null);
   const [error, setError] = useState('');
+
+  // Функция для автоматического определения платформы по URL (аналогично PlatformNormalizationService)
+  const detectPlatform = (url) => {
+    if (!url || !url.trim()) {
+      return null;
+    }
+
+    const urlLower = url.toLowerCase().trim();
+
+    if (urlLower.includes('youtube.com') || urlLower.includes('youtu.be')) {
+      return 'youtube';
+    }
+
+    if (urlLower.includes('tiktok.com')) {
+      return 'tiktok';
+    }
+
+    if (urlLower.includes('instagram.com')) {
+      return 'instagram';
+    }
+
+    if (urlLower.includes('facebook.com')) {
+      return 'facebook';
+    }
+
+    return null;
+  };
+
+  // Обработчик изменения URL - автоматически определяем платформу
+  const handleUrlChange = (e) => {
+    const newUrl = e.target.value;
+    setUrl(newUrl);
+    
+    const platform = detectPlatform(newUrl);
+    setDetectedPlatform(platform);
+    
+    // Очищаем ошибку и данные при изменении URL
+    if (error) setError('');
+    if (videoData) setVideoData(null);
+  };
 
   // Функции для извлечения video_id из URL (скопированы из PlatformNormalizationService)
   const extractYouTubeId = (url) => {
@@ -122,6 +162,14 @@ const VideoPreview = () => {
       return;
     }
 
+    // Автоматически определяем платформу
+    const platform = detectPlatform(url);
+    
+    if (!platform) {
+      setError('Could not detect platform from URL. Supported platforms: YouTube, TikTok, Instagram, Facebook');
+      return;
+    }
+
     let videoId = null;
 
     switch (platform) {
@@ -169,25 +217,15 @@ const VideoPreview = () => {
             type="text"
             id="url"
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            onChange={handleUrlChange}
             placeholder="https://www.youtube.com/watch?v=..."
             className="url-input"
           />
-        </div>
-
-        <div className="control-group">
-          <label htmlFor="platform">Platform:</label>
-          <select
-            id="platform"
-            value={platform}
-            onChange={(e) => setPlatform(e.target.value)}
-            className="platform-select"
-          >
-            <option value="youtube">YouTube</option>
-            <option value="tiktok">TikTok</option>
-            <option value="instagram">Instagram</option>
-            <option value="facebook">Facebook</option>
-          </select>
+          {detectedPlatform && (
+            <div className="detected-platform">
+              Detected platform: <strong>{detectedPlatform.charAt(0).toUpperCase() + detectedPlatform.slice(1)}</strong>
+            </div>
+          )}
         </div>
 
         <button onClick={handleTest} className="test-button">
